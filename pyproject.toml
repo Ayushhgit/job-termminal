@@ -1,0 +1,30 @@
+[project]
+name = "job-intelligence"
+version = "0.1.0"
+description = "AI Job Intelligence System - Tracks 50k companies and predicts internship openings"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.30.0",
+    "redis>=5.0.0",
+    "httpx>=0.27.0",
+    "playwright>=1.40.0",
+    "feedparser>=6.0.0",
+    "groq>=0.9.0",
+    "python-dotenv>=1.0.0",
+    "rapidfuzz>=3.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "arq>=0.26.0",
+    "sentence-transformers>=3.0.0",
+    "numpy>=1.26.0",
+    "pgvector>=0.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+]

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Job Intelligence — Dashboard</title>
+    <meta name="description" content="Track 50,000+ companies and predict internship openings with AI-powered signal intelligence.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- ── Sidebar ──────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">⚡</div>
+            <span class="brand-text">JobIntel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-section="overview">
+                <span class="nav-icon">📊</span>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-section="companies">
+                <span class="nav-icon">🏢</span>
+                <span>Companies</span>
+            </a>
+            <a href="#" class="nav-item" data-section="signals">
+                <span class="nav-icon">📡</span>
+                <span>Signals</span>
+            </a>
+            <a href="#" class="nav-item" data-section="jobs">
+                <span class="nav-icon">💼</span>
+                <span>Jobs</span>
+            </a>
+            <a href="#" class="nav-item" data-section="alerts">
+                <span class="nav-icon">🔔</span>
+                <span>Alerts</span>
+            </a>
+            <a href="#" class="nav-item" data-section="scanner">
+                <span class="nav-icon">🔍</span>
+                <span>Scanner</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="status-dot" id="apiStatus"></div>
+            <span class="status-text" id="apiStatusText">Connecting...</span>
+        </div>
+    </aside>
+
+    <!-- ── Main Content ─────────────────────────────── -->
+    <main class="main-content">
+        <header class="top-bar">
+            <button class="menu-toggle" id="menuToggle">☰</button>
+            <h1 class="page-title" id="pageTitle">Overview</h1>
+            <div class="top-bar-right">
+                <span class="version-badge">v2.0</span>
+                <button class="btn btn-sm btn-primary" id="refreshBtn" title="Refresh data">↻ Refresh</button>
+            </div>
+        </header>
+
+        <!-- ── Overview Section ──────────────────── -->
+        <section class="content-section active" id="section-overview">
+            <div class="stats-grid">
+                <div class="stat-card gradient-1">
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statCompanies">—</span>
+                        <span class="stat-label">Companies Tracked</span>
+                    </div>
+                </div>
+                <div class="stat-card gradient-2">
+                    <div class="stat-icon">📡</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statSignals">—</span>
+                        <span class="stat-label">Signals Collected</span>
+                    </div>
+                </div>
+                <div class="stat-card gradient-3">
+                    <div class="stat-icon">💼</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statJobs">—</span>
+                        <span class="stat-label">Jobs Discovered</span>
+                    </div>
+                </div>
+                <div class="stat-card gradient-4">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statHighProb">—</span>
+                        <span class="stat-label">High Probability</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cards-row">
+                <div class="card card-lg">
+                    <div class="card-header">
+                        <h3>🏆 Top Companies by Probability</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="data-table" id="topCompaniesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Company</th>
+                                        <th>Tier</th>
+                                        <th>Probability</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📊 Tier Breakdown</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tier-bars" id="tierBars"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>📡 Latest Signals</h3>
+                </div>
+                <div class="card-body">
+                    <div class="signal-feed" id="latestSignals"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Companies Section ─────────────────── -->
+        <section class="content-section" id="section-companies">
+            <div class="filter-bar">
+                <input type="text" class="filter-input" id="companySearch" placeholder="Search companies...">
+                <select class="filter-select" id="tierFilter">
+                    <option value="">All Tiers</option>
+                    <option value="1">Tier 1</option>
+                    <option value="2">Tier 2</option>
+                    <option value="3">Tier 3</option>
+                </select>
+                <input type="number" class="filter-input filter-input-sm" id="minProbFilter" placeholder="Min probability" min="0" max="1" step="0.1">
+                <button class="btn btn-primary" id="filterCompaniesBtn">Filter</button>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="companiesTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company</th>
+                                    <th>Website</th>
+                                    <th>Careers</th>
+                                    <th>GitHub</th>
+                                    <th>Tier</th>
+                                    <th>Probability</th>
+                                    <th>Scan</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="companiesPagination"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Signals Section ───────────────────── -->
+        <section class="content-section" id="section-signals">
+            <div class="filter-bar">
+                <select class="filter-select" id="signalTypeFilter">
+                    <option value="">All Types</option>
+                    <option value="career">Career</option>
+                    <option value="github">GitHub</option>
+                    <option value="social">Social</option>
+                    <option value="funding">Funding</option>
+                </select>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="internshipOnlyFilter"> Internship Only
+                </label>
+                <button class="btn btn-primary" id="filterSignalsBtn">Filter</button>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="signalsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company</th>
+                                    <th>Type</th>
+                                    <th>Signal Data</th>
+                                    <th>Confidence</th>
+                                    <th>Internship</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="signalsPagination"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Jobs Section ──────────────────────── -->
+        <section class="content-section" id="section-jobs">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="jobsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company</th>
+                                    <th>Title</th>
+                                    <th>Source</th>
+                                    <th>Link</th>
+                                    <th>Detected</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="jobsPagination"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Alerts Section ────────────────────── -->
+        <section class="content-section" id="section-alerts">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="alertsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Company</th>
+                                    <th>Message</th>
+                                    <th>Probability</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="alertsPagination"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Scanner Section ───────────────────── -->
+        <section class="content-section" id="section-scanner">
+            <div class="scanner-grid">
+                <div class="card scanner-card">
+                    <div class="card-header">
+                        <h3>🚀 Batch Scan</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-desc">Run all 4 agents (Career, GitHub, Social, Funding) across multiple companies at once.</p>
+                        <div class="scanner-controls">
+                            <label>Max companies:</label>
+                            <input type="number" id="scanMaxCompanies" value="10" min="1" max="200" class="filter-input filter-input-sm">
+                        </div>
+                        <button class="btn btn-lg btn-gradient" id="scanNowBtn">
+                            <span class="btn-icon">⚡</span> Scan Now
+                        </button>
+                        <div class="scan-results" id="batchScanResults"></div>
+                    </div>
+                </div>
+
+                <div class="card scanner-card">
+                    <div class="card-header">
+                        <h3>🎯 Single Company Scan</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-desc">Deep-scan a specific company for hiring signals.</p>
+                        <div class="scanner-controls">
+                            <label>Company ID:</label>
+                            <input type="number" id="scanCompanyId" value="1" min="1" class="filter-input filter-input-sm">
+                        </div>
+                        <button class="btn btn-lg btn-outline" id="scanCompanyBtn">
+                            <span class="btn-icon">🔍</span> Scan Company
+                        </button>
+                        <div class="scan-results" id="companyScanResults"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ── Loading Overlay ──────────────────────── -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <span>Processing...</span>
+    </div>
+
+    <!-- ── Toast Container ──────────────────────── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

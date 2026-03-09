@@ -196,11 +196,13 @@ async function loadCompanies() {
     const name = $("#companySearch").value;
     const tier = $("#tierFilter").value;
     const minProb = $("#minProbFilter").value;
+    const country = $("#countryFilter").value;
 
     let q = `/companies?page=${s.page}&page_size=${s.pageSize}`;
     if (name) q += `&company_name=${encodeURIComponent(name)}`;
     if (tier) q += `&tier=${tier}`;
     if (minProb) q += `&min_probability=${minProb}`;
+    if (country) q += `&country=${encodeURIComponent(country)}`;
 
     const data = await api(q);
     if (!data) return;
@@ -215,9 +217,9 @@ async function loadCompanies() {
             <tr>
                 <td>${c.id}</td>
                 <td><strong>${c.company_name}</strong></td>
+                <td><span class="badge badge-country-${(c.country || 'Global').toLowerCase()}">${c.country === 'India' ? '🇮🇳 India' : '🌍 Global'}</span></td>
                 <td><a class="link" href="${c.website}" target="_blank">${new URL(c.website).hostname}</a></td>
                 <td><a class="link" href="${c.careers_url}" target="_blank">Careers ↗</a></td>
-                <td>${c.github_org || "—"}</td>
                 <td>${tierBadge(c.tier)}</td>
                 <td>${probBar(c.internship_probability)}</td>
                 <td><button class="btn-scan" onclick="scanCompany(${c.id})">🔍</button></td>
@@ -272,26 +274,50 @@ async function loadSignals() {
 }
 
 // ── Jobs ──────────────────────────────────────────────────────
+function jobTypeBadge(type) {
+    const icons = { internship: '🎓', 'full-time': '💼', contract: '📝', 'part-time': '⏰' };
+    return `<span class="badge badge-jobtype-${type || 'other'}">${icons[type] || '📄'} ${type || 'other'}</span>`;
+}
+
 async function loadJobs() {
     const s = state.jobs;
-    const data = await api(`/jobs?page=${s.page}&page_size=${s.pageSize}`);
+    const search = $("#jobSearch") ? $("#jobSearch").value : "";
+    const jobType = $("#jobTypeFilter") ? $("#jobTypeFilter").value : "";
+    const location = $("#jobLocationFilter") ? $("#jobLocationFilter").value : "";
+
+    let q = `/jobs?page=${s.page}&page_size=${s.pageSize}`;
+    if (search) q += `&search=${encodeURIComponent(search)}`;
+    if (jobType) q += `&job_type=${encodeURIComponent(jobType)}`;
+    if (location) q += `&location=${encodeURIComponent(location)}`;
+
+    const data = await api(q);
     if (!data) return;
 
-    const tbody = $("#jobsTable tbody");
+    const grid = $("#jobCardsGrid");
     if (data.jobs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">💼</div><div class="empty-state-text">No jobs discovered yet. Jobs appear when companies with high probability are deep-crawled.</div></td></tr>`;
+        grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">💼</div><div class="empty-state-text">No jobs found matching your filters. Try broadening your search!</div></div>`;
     } else {
-        tbody.innerHTML = data.jobs
+        grid.innerHTML = data.jobs
             .map(
                 (j) => `
-            <tr>
-                <td>${j.id}</td>
-                <td>${companyName(j.company_id)}</td>
-                <td>${j.title}</td>
-                <td>${j.source || "—"}</td>
-                <td>${j.url ? `<a class="link" href="${j.url}" target="_blank">View ↗</a>` : "—"}</td>
-                <td>${timeAgo(j.detected_at)}</td>
-            </tr>`
+            <div class="job-card">
+                <div class="job-card-header">
+                    <div class="job-card-company">${escapeHtml(j.company_name || 'Unknown')}</div>
+                    ${jobTypeBadge(j.job_type)}
+                </div>
+                <h3 class="job-card-title">${escapeHtml(j.title)}</h3>
+                <div class="job-card-meta">
+                    ${j.location ? `<span class="job-meta-item">📍 ${escapeHtml(j.location)}</span>` : ''}
+                    ${j.salary_range ? `<span class="job-meta-item">💰 ${escapeHtml(j.salary_range)}</span>` : ''}
+                </div>
+                <p class="job-card-desc">${escapeHtml((j.description || '').slice(0, 150))}${(j.description || '').length > 150 ? '…' : ''}</p>
+                <div class="job-card-footer">
+                    <span class="job-card-time">${timeAgo(j.detected_at)}</span>
+                    <a class="btn btn-apply" href="${j.application_url || j.url || '#'}" target="_blank" rel="noopener">
+                        Apply Now →
+                    </a>
+                </div>
+            </div>`
             )
             .join("");
     }
@@ -493,6 +519,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (e.key === "Enter") {
             state.companies.page = 1;
             loadCompanies();
+        }
+    });
+
+    // Job filters
+    $("#filterJobsBtn").addEventListener("click", () => {
+        state.jobs.page = 1;
+        loadJobs();
+    });
+
+    $("#jobSearch").addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+            state.jobs.page = 1;
+            loadJobs();
         }
     });
 

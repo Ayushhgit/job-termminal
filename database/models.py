@@ -48,6 +48,7 @@ class Company(Base):
     careers_url: Mapped[str | None] = mapped_column(String(1024))
     github_org: Mapped[str | None] = mapped_column(String(256))
     twitter_handle: Mapped[str | None] = mapped_column(String(256))
+    country: Mapped[str] = mapped_column(String(128), default="Global", index=True)
     tier: Mapped[int] = mapped_column(Integer, default=Tier.TIER3, index=True)
     last_checked: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
     internship_probability: Mapped[float] = mapped_column(Float, default=0.0, index=True)
@@ -100,7 +101,12 @@ class Job(Base):
     title: Mapped[str] = mapped_column(String(512))
     url: Mapped[str | None] = mapped_column(String(1024))
     description: Mapped[str | None] = mapped_column(Text)
-    source: Mapped[str | None] = mapped_column(String(128))  # careers_page | github | api
+    location: Mapped[str | None] = mapped_column(String(256), index=True)
+    job_type: Mapped[str | None] = mapped_column(String(64), index=True)  # internship | full-time | contract | part-time
+    application_url: Mapped[str | None] = mapped_column(String(1024))
+    salary_range: Mapped[str | None] = mapped_column(String(128))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    source: Mapped[str | None] = mapped_column(String(128))  # careers_page | github | api | seed
     detected_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

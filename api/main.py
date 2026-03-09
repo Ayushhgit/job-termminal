@@ -40,6 +40,14 @@ async def lifespan(app: FastAPI):
     await init_db()
     await seed_companies()
 
+    # Seed sample job listings
+    try:
+        from seed_jobs import seed_jobs
+        await seed_jobs()
+        logger.info("🚀 Sample job listings ready.")
+    except Exception as exc:
+        logger.warning("Job seeding skipped: %s", exc)
+
     # Init pgvector store
     try:
         from pipeline.vector_search import init_vector_store
@@ -122,6 +130,7 @@ async def list_companies(
     company_name: str | None = Query(None, description="Filter by company name (partial match)"),
     min_probability: float | None = Query(None, ge=0, le=1, description="Minimum internship probability"),
     tier: int | None = Query(None, ge=1, le=3, description="Company tier (1, 2, or 3)"),
+    country: str | None = Query(None, description="Filter by country (e.g. India, Global)"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
 ):
@@ -135,6 +144,8 @@ async def list_companies(
             q = q.where(Company.internship_probability >= min_probability)
         if tier is not None:
             q = q.where(Company.tier == tier)
+        if country:
+            q = q.where(Company.country == country)
 
         # Count
         count_q = select(sqla_func.count()).select_from(q.subquery())
@@ -158,6 +169,7 @@ async def list_companies(
                     "careers_url": c.careers_url,
                     "github_org": c.github_org,
                     "twitter_handle": c.twitter_handle,
+                    "country": c.country,
                     "tier": c.tier,
                     "internship_probability": c.internship_probability,
                     "last_signal_score": c.last_signal_score,
@@ -213,14 +225,23 @@ async def high_probability_companies(
 @app.get("/jobs", tags=["jobs"])
 async def list_jobs(
     company_id: int | None = Query(None, description="Filter by company ID"),
+    location: str | None = Query(None, description="Filter by location (partial match, e.g. 'India', 'Remote')"),
+    job_type: str | None = Query(None, description="Filter: internship | full-time | contract | part-time"),
+    search: str | None = Query(None, description="Search job titles by keyword"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
 ):
-    """List discovered job listings."""
+    """List discovered job listings with filters."""
     async with get_session() as session:
         q = select(Job)
         if company_id is not None:
             q = q.where(Job.company_id == company_id)
+        if location:
+            q = q.where(Job.location.ilike(f"%{location}%"))
+        if job_type:
+            q = q.where(Job.job_type == job_type)
+        if search:
+            q = q.where(Job.title.ilike(f"%{search}%"))
 
         count_q = select(sqla_func.count()).select_from(q.subquery())
         total = (await session.execute(count_q)).scalar() or 0
@@ -230,6 +251,17 @@ async def list_jobs(
         result = await session.execute(q)
         jobs = result.scalars().all()
 
+        # Build company map for names
+        company_ids = set(j.company_id for j in jobs)
+        company_map = {}
+        if company_ids:
+            from sqlalchemy import or_
+            cq = await session.execute(
+                select(Company).where(Company.id.in_(company_ids))
+            )
+            for c in cq.scalars().all():
+                company_map[c.id] = c.company_name
+
         return {
             "total": total,
             "page": page,
@@ -238,9 +270,15 @@ async def list_jobs(
                 {
                     "id": j.id,
                     "company_id": j.company_id,
+                    "company_name": company_map.get(j.company_id, "Unknown"),
                     "title": j.title,
                     "url": j.url,
                     "description": j.description,
+                    "location": j.location,
+                    "job_type": j.job_type,
+                    "application_url": j.application_url or j.url,
+                    "salary_range": j.salary_range,
+                    "is_active": j.is_active,
                     "source": j.source,
                     "detected_at": str(j.detected_at),
                 }

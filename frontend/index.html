@@ -145,6 +145,11 @@
                     <option value="2">Tier 2</option>
                     <option value="3">Tier 3</option>
                 </select>
+                <select class="filter-select" id="countryFilter">
+                    <option value="">All Countries</option>
+                    <option value="India">🇮🇳 India</option>
+                    <option value="Global">🌍 Global</option>
+                </select>
                 <input type="number" class="filter-input filter-input-sm" id="minProbFilter" placeholder="Min probability" min="0" max="1" step="0.1">
                 <button class="btn btn-primary" id="filterCompaniesBtn">Filter</button>
             </div>
@@ -156,9 +161,9 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Company</th>
+                                    <th>Country</th>
                                     <th>Website</th>
                                     <th>Careers</th>
-                                    <th>GitHub</th>
                                     <th>Tier</th>
                                     <th>Probability</th>
                                     <th>Scan</th>
@@ -212,26 +217,27 @@
 
         <!-- ── Jobs Section ──────────────────────── -->
         <section class="content-section" id="section-jobs">
-            <div class="card">
-                <div class="card-body">
-                    <div class="table-wrapper">
-                        <table class="data-table" id="jobsTable">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Company</th>
-                                    <th>Title</th>
-                                    <th>Source</th>
-                                    <th>Link</th>
-                                    <th>Detected</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                    <div class="pagination" id="jobsPagination"></div>
-                </div>
+            <div class="filter-bar">
+                <input type="text" class="filter-input" id="jobSearch" placeholder="Search jobs (e.g. Software Engineer, ML Intern)...">
+                <select class="filter-select" id="jobTypeFilter">
+                    <option value="">All Types</option>
+                    <option value="internship">🎓 Internship</option>
+                    <option value="full-time">💼 Full-time</option>
+                    <option value="contract">📝 Contract</option>
+                    <option value="part-time">⏰ Part-time</option>
+                </select>
+                <select class="filter-select" id="jobLocationFilter">
+                    <option value="">All Locations</option>
+                    <option value="India">🇮🇳 India</option>
+                    <option value="USA">🇺🇸 USA</option>
+                    <option value="Remote">🌐 Remote</option>
+                </select>
+                <button class="btn btn-primary" id="filterJobsBtn">Search Jobs</button>
             </div>
+            <div class="job-cards-grid" id="jobCardsGrid">
+                <!-- Job cards rendered here by JS -->
+            </div>
+            <div class="pagination" id="jobsPagination"></div>
         </section>
 
         <!-- ── Alerts Section ────────────────────── -->
